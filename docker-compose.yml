@@ -1,0 +1,45 @@
+name: estudiante04
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: est04_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tareas}
+      POSTGRES_USER: ${POSTGRES_USER:-estudiante}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devops2024seguro}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-estudiante} -d ${POSTGRES_DB:-tareas}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: est04_api
+    ports:
+      - "${API_PORT:-8004}:5000"
+    environment:
+      ESTUDIANTE: ${ESTUDIANTE:-estudiante04}
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-tareas}
+      POSTGRES_USER: ${POSTGRES_USER:-estudiante}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devops2024seguro}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - devops-network
+    restart: on-failure
+
+networks:
+  devops-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
